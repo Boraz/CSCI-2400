@@ -1,0 +1,125 @@
+ * Extra credit
+ */
+/*
+ * float_abs - Return bit-level equivalent of absolute value of f for
+ *   floating point argument f.
+ *   Both the argument and result are passed as unsigned int's, but
+ *   they are to be interpreted as the bit-level representations of
+ *   single-precision floating point values.
+ *   When argument is NaN, return argument..
+ *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
+ *   Max ops: 10
+ *   Rating: 2
+ */
+  unsigned float_abs(unsigned uf) {
+  unsigned mask = 0x7FFFFFFF;  
+  unsigned minNaN = 0x7F800001;
+  unsigned res = uf & mask;   // set sign bit to 0
+ 
+  // return argument if it is NaN, all NaN >= minimum NaN
+  if (res >= minNaN)
+  {
+    return uf;
+  }
+  else
+  {
+    return res;
+  }
+}
+/*
+ * float_f2i - Return bit-level equivalent of expression (int) f
+ *   for floating point argument f.
+ *   Argument is passed as unsigned int, but
+ *   it is to be interpreted as the bit-level representation of a
+ *   single-precision floating point value.
+ *   Anything out of range (including NaN and infinity) should return
+ *   0x80000000u.
+ *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
+ *   Max ops: 30
+ *   Rating: 4
+ */
+int float_f2i(unsigned uf) {
+    /* Consider different situation */
+    unsigned uSign = uf >> 31;
+    unsigned uExp = (uf << 1) >> 24;
+    unsigned uFrac = (uf & 0x7FFFFF) + 0x800000;
+    int iReturn;
+    if (uExp < 127) { // Too small, |uf| < 1
+        return 0;
+    }
+    switch (uExp) {
+    case 150:
+    case 151:
+    case 152:
+    case 153:
+    case 154:
+    case 155:
+    case 156:
+    case 157:
+        iReturn = uFrac << (uExp - 150);
+       break;
+    case 127:
+    case 128:
+    case 129:
+    case 130:
+    case 131:
+    case 132:
+    case 133:
+    case 134:
+    case 135:
+    case 136:
+    case 137:
+    case 138:
+    case 139:
+    case 140:
+    case 141:
+    case 142:
+    case 143:
+    case 144:
+    case 145:
+    case 146:
+    case 147:
+    case 148:
+    case 149:
+        iReturn = uFrac >> (150 - uExp);
+        break;
+    default:
+        return 0x80000000;
+        break;
+    }
+    if (uSign)
+        return -iReturn;
+    else
+    return iReturn;    
+}
+/*
+ * float_half - Return bit-level equivalent of expression 0.5*f for
+ *   floating point argument f.
+ *   Both the argument and result are passed as unsigned int's, but
+ *   they are to be interpreted as the bit-level representation of
+ *   single-precision floating point values.
+ *   When argument is NaN, return argument
+ *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
+ *   Max ops: 30
+ *   Rating: 4
+ */
+unsigned float_half(unsigned uf) {
+    /* Divide into NaN/infinity, Denormalized, Normailized */
+    unsigned uSign = uf & 0x80000000;
+    unsigned uNonSign = uf << 1;
+    if (uNonSign >= 0xFF000000) { // NaN/infinity
+        return uf;
+    } else if (uNonSign <= 0x01FFFFFF) { // Denormalized
+        uNonSign >>= 2;
+        switch (uf & 3) { // Round to even
+        case 3:
+            ++uNonSign;
+            break;
+        default:
+            break;
+        }
+        return uSign | uNonSign;
+    } else { // Normalized
+        return uf - 0x800000;
+    }
+}

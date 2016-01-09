@@ -1,0 +1,3 @@
+move (use constant) , into global
+push bang address
+ret
